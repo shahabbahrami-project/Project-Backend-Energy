@@ -126,10 +126,10 @@ class PrivateUserApiTests(TestCase):
             'name': self.user.name,
             'email': self.user.email
         }
-        self.assertTrue(set(Info.items()).issubset(set(res.data.items()) ))
+        self.assertTrue(set(Info.items()).issubset(set(res.data.items())))
 
     def test_post_me_not_allowed(self):
-        """Test that POST is not allowed on hte me url"""
+        """Test that POST is not allowed on the me url"""
         res = self.client.post(ME_URL, {})
 
         self.assertEqual(res.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)

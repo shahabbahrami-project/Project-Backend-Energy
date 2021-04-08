@@ -40,6 +40,7 @@ class SuperUserSerializer(serializers.ModelSerializer):
                   'is_staff')
         extra_kwargs = {'password': {'write_only': True, 'min_length': 5}}
         read_only_fields = ('id',)
+        
     def create(self, validated_data):
         """Create a new user with encrypted password and return it"""
         return get_user_model().objects.create_superuser(**validated_data)

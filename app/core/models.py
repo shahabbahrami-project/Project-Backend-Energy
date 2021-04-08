@@ -36,6 +36,14 @@ def user_image_file_path(instance, filename):
     return os.path.join('uploads/user/', filename)
 
 
+def site_image_file_path(instance, filename):
+    """Generate file path for new site image"""
+    ext = filename.split('.')[-1]
+    filename = f'{uuid.uuid4()}.{ext}'
+
+    return os.path.join('uploads/site/', filename)
+
+
 def recipe_image_file_path(instance, filename):
     """Generate file path for new recipe image"""
     ext = filename.split('.')[-1]
@@ -129,6 +137,23 @@ class Sensor(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
     )
+
+    def __str__(self):
+        return self.name
+
+
+class Site(models.Model):
+    """Site object"""
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+    )
+    name = models.CharField(max_length=255)
+    locationX=models.CharField(max_length=50)
+    locationY=models.CharField(max_length=50)
+    link = models.CharField(max_length=255, blank=True)
+    sensors = models.ManyToManyField('Sensor')
+    image = models.ImageField(null=True, upload_to=site_image_file_path)
 
     def __str__(self):
         return self.name

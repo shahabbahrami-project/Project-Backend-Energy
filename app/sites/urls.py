@@ -6,6 +6,7 @@ from sites import views
 
 router = DefaultRouter()
 router.register('sensors', views.SensorViewSet)
+router.register('sites', views.SiteViewSet)
 
 app_name = 'sites'
 
