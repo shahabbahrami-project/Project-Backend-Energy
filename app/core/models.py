@@ -62,6 +62,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     """Custom user model that supports email instead of username"""
     email = models.EmailField(max_length=255, unique=True)
     name = models.CharField(max_length=255)
+    observerInSitesIds = models.CharField(max_length=255, default="")
+    operatorInSitesIds = models.CharField(max_length=255,  default="")
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
