@@ -28,6 +28,14 @@ from django.conf import settings
 #     USERNAME_FIELD = 'email'
 
 
+def user_image_file_path(instance, filename):
+    """Generate file path for new user image"""
+    ext = filename.split('.')[-1]
+    filename = f'{uuid.uuid4()}.{ext}'
+
+    return os.path.join('uploads/user/', filename)
+
+
 def recipe_image_file_path(instance, filename):
     """Generate file path for new recipe image"""
     ext = filename.split('.')[-1]
@@ -66,7 +74,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     operatorInSitesIds = models.CharField(max_length=255,  default="")
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
-
+    image = models.ImageField(null=True, upload_to=user_image_file_path)
     objects = UserManager()
 
     USERNAME_FIELD = 'email'
@@ -112,3 +120,15 @@ class Recipe(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class Sensor(models.Model):
+    """Sensor to be used for a site"""
+    name = models.CharField(max_length=255)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+    )
+
+    def __str__(self):
+        return self.name
