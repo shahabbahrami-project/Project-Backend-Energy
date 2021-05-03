@@ -1,6 +1,24 @@
 from rest_framework import serializers
 
-from core.models import Sensor, Site
+from core.models import Sensor, Device, Site, SensorType, DeviceType, SensorData, DeviceData
+
+
+class SensorTypeSerializer(serializers.ModelSerializer):
+    """Serializer for Sensor Types objects"""
+
+    class Meta:
+        model = SensorType
+        fields = ('id', 'name')
+        read_only_fields = ('id',)
+
+
+class DeviceTypeSerializer(serializers.ModelSerializer):
+    """Serializer for Device Types objects"""
+
+    class Meta:
+        model = DeviceType
+        fields = ('id', 'name')
+        read_only_fields = ('id',)
 
 
 class SensorSerializer(serializers.ModelSerializer):
@@ -8,7 +26,33 @@ class SensorSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Sensor
-        fields = ('id', 'name')
+        fields = ('id', 'name', 'type', 'user', 'lastRealValue', 'lastAlgoValue', 'lastTimeValue', 'created_at')
+        read_only_fields = ('id',)
+
+
+class DeviceSerializer(serializers.ModelSerializer):
+    """Serializer for Device objects"""
+
+    class Meta:
+        model = Device
+        fields = ('id', 'name', 'type', 'user', 'sensors', 'stateReal', 'stateAlgo', 'lastRealPowerValue', 'lastAlgoPowerValue',  'costReal', 'costAlgo', 'lastTimeValue', 'created_at')
+        read_only_fields = ('id',)
+
+class SensorDataSerializer(serializers.ModelSerializer):
+    """Serializer for Sensor Data objects"""
+
+    class Meta:
+        model = SensorData
+        fields = ('id', 'name', 'user', 'realvalue', 'algovalue', 'datetime')
+        read_only_fields = ('id',)
+
+
+class DeviceDataSerializer(serializers.ModelSerializer):
+    """Serializer for Sensor Data objects"""
+
+    class Meta:
+        model = DeviceData
+        fields = ('id', 'name', 'user', 'realpowervalue', 'algopowervalue',  'realstatevalue', 'algostatevalue', 'costreal', 'costalgo', 'datetime')
         read_only_fields = ('id',)
 
 
@@ -22,7 +66,7 @@ class SiteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Site
         fields = (
-            'id', 'name', 'locationX', 'locationY', 'sensors', 'link'
+            'id', 'name', 'locationX', 'locationY', 'devices', 'sensors', 'timezone', 'link', 'image', 'created_at'
         )
         read_only_fields = ('id',)
 

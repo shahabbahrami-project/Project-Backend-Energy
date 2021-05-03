@@ -4,14 +4,17 @@ from rest_framework import viewsets, mixins, status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 
-from core.models import Sensor, Site
+from core.models import Sensor, Site, SensorType, SensorData, Device, DeviceType, DeviceData
 
 from sites import serializers
 
 
 class BaseSiteAttrViewSet(viewsets.GenericViewSet,
                             mixins.ListModelMixin,
-                            mixins.CreateModelMixin):
+                            mixins.CreateModelMixin,
+                            mixins.RetrieveModelMixin,
+                            mixins.UpdateModelMixin,
+                            mixins.DestroyModelMixin):
     """Base viewset for user owned site attributes"""
     authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAuthenticated,)
@@ -34,26 +37,40 @@ class BaseSiteAttrViewSet(viewsets.GenericViewSet,
         serializer.save(user=self.request.user)
 
 
-# class SensorViewSet(viewsets.GenericViewSet,
-#                     mixins.ListModelMixin,
-#                     mixins.CreateModelMixin):
-#     """Manage sensor in the database"""
-#     authentication_classes = (TokenAuthentication,)
-#     permission_classes = (IsAuthenticated,)
-#     queryset = Sensor.objects.all()
-#     serializer_class = serializers.SensorSerializer
-#
-#     def get_queryset(self):
-#         """Return objects for the current authenticated user only"""
-#         return self.queryset.filter(user=self.request.user).order_by('-name')
-#
-#     def perform_create(self, serializer):
-#         """Create a new sensor"""
-#         serializer.save(user=self.request.user)
+class DeviceTypeViewSet(BaseSiteAttrViewSet):
+    """Manage device type in the database"""
+    queryset = DeviceType.objects.all()
+    serializer_class = serializers.DeviceTypeSerializer
+
+
+class DeviceViewSet(BaseSiteAttrViewSet):
+    """Manage device in the database"""
+    queryset = Device.objects.all()
+    serializer_class = serializers.DeviceSerializer
+
+
+class SensorTypeViewSet(BaseSiteAttrViewSet):
+    """Manage sensor type in the database"""
+    queryset = SensorType.objects.all()
+    serializer_class = serializers.SensorTypeSerializer
+
+
 class SensorViewSet(BaseSiteAttrViewSet):
     """Manage sensor in the database"""
     queryset = Sensor.objects.all()
     serializer_class = serializers.SensorSerializer
+
+
+class SensorDataViewSet(BaseSiteAttrViewSet):
+    """Manage sensor in the database"""
+    queryset = SensorData.objects.all()
+    serializer_class = serializers.SensorSerializer
+
+
+class DeviceDataViewSet(BaseSiteAttrViewSet):
+    """Manage sensor in the database"""
+    queryset = DeviceData.objects.all()
+    serializer_class = serializers.DeviceDataSerializer
 
 
 class SiteViewSet(viewsets.ModelViewSet):

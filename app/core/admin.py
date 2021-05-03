@@ -25,8 +25,13 @@ class UserAdmin(BaseUserAdmin):
 
 
 admin.site.register(models.User, UserAdmin)
-admin.site.register(models.Tag)
-admin.site.register(models.Ingredient)
-admin.site.register(models.Recipe)
+# admin.site.register(models.Tag)
+# admin.site.register(models.Ingredient)
+# admin.site.register(models.Recipe)
+admin.site.register(models.DeviceType)
+admin.site.register(models.Device)
+admin.site.register(models.DeviceData)
+admin.site.register(models.SensorType)
 admin.site.register(models.Sensor)
+admin.site.register(models.SensorData)
 admin.site.register(models.Site)
