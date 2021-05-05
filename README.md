@@ -1,2 +1,1 @@
-# recipe-app-api
-Recipe app api source code.
+Energy Management Project App
