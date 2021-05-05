@@ -2,6 +2,7 @@ FROM python:3.7-alpine
 MAINTAINER Shahab App Developer
 
 ENV PYTHONUNBUFFERED 1
+ENV PYTHONDONTWRITEBYTECODE 1
 
 COPY ./requirements.txt /requirements.txt
 RUN apk add --update --no-cache postgresql-client jpeg-dev
@@ -11,6 +12,7 @@ RUN pip install -r /requirements.txt
 RUN apk del .tmp-build-deps
 
 RUN mkdir /app
+RUN mkdir /app/staticfiles
 WORKDIR /app
 COPY ./app /app
 
