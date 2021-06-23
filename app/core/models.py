@@ -224,6 +224,11 @@ class SensorData(models.Model):
         on_delete=models.CASCADE,
         null=True
     )
+    type= models.ForeignKey(
+        SensorType,
+        on_delete=models.CASCADE,
+        null=True
+    )
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,

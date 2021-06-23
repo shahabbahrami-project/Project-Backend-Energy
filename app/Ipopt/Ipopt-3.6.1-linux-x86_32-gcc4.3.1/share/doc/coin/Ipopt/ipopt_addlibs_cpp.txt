@@ -1,0 +1,1 @@
+-lpthread  -lm  -ldl  -L/usr/lib/gcc/i586-suse-linux/4.3 -L/usr/lib/gcc/i586-suse-linux/4.3/../../../../i586-suse-linux/lib -L/usr/lib/gcc/i586-suse-linux/4.3/../../.. -lgfortranbegin -lgfortran -lm -lgcc_s

@@ -66,7 +66,7 @@ class SiteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Site
         fields = (
-            'id', 'name', 'locationX', 'locationY', 'devices', 'sensors', 'timezone', 'link', 'image', 'created_at'
+            'id', 'name', 'locationX', 'locationY', 'devices', 'sensors', 'timezone', 'link', 'created_at'
         )
         read_only_fields = ('id',)
 

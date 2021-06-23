@@ -16,5 +16,7 @@ router.register('sensordata', views.SensorDataViewSet)
 app_name = 'sites'
 
 urlpatterns = [
-    path('', include(router.urls))
+    path('', include(router.urls)),
+    path('historydata/', views.SensorDataGeneration),
+    path('onlinedata/', views.SensorOnline),
 ]
