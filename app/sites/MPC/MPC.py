@@ -13,7 +13,7 @@ def MPC(Tindoor, Tout, Tdes, N, price, w):
     Tin >= 0,
     Tin==Tindoor+np.exp(-300/130)*(Tout-Tindoor)+np.exp(-300/130)*(Tair-Tindoor),
     ]
-    prob = cp.Problem(cp.Minimize(price*cp.norm(Tair-Tindoor, 1)+w*N*cp.norm(Tin-Tdes, 1)),
+    prob = cp.Problem(cp.Minimize(price*cp.norm(Tair, 1)+w*N*cp.norm(Tin-Tdes, 1)),
                       constraints)
 
     prob.solve(verbose=True, warm_start=True)

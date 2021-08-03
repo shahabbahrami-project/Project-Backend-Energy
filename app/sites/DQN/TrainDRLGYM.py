@@ -9,9 +9,9 @@ from rl.memory import SequentialMemory
 
 def build_model(states, actions):
     model = Sequential()
-    model.add(Dense(5, activation='relu', input_shape=states))
+    model.add(Dense(50, activation='tanh', input_shape=states))
     model.add(Flatten())
-    model.add(Dense(5, activation='relu'))
+    model.add(Dense(50, activation='tanh'))
     model.add(Dense(actions, activation='linear'))
     return model
 
@@ -32,8 +32,8 @@ def TrainDRLGYM(FromHour,ToHour,W,Desire):
 
     model.summary()
     dqn = build_agent(model, actions)
-    dqn.compile(Adam(lr=1e-3), metrics=['mae'])
-    dqn.fit(env, nb_steps=200, visualize=False, verbose=1)
+    dqn.compile(Adam(lr=2e-3), metrics=['mae'])
+    dqn.fit(env, nb_steps=2000, visualize=False, verbose=1)
 
     scores = dqn.test(env, nb_episodes=1, visualize=False)
     print(np.mean(scores.history['episode_reward']))
@@ -43,3 +43,4 @@ def TrainDRLGYM(FromHour,ToHour,W,Desire):
     dqn.save_weights('dqn_weights.h5', overwrite=True)
     final=True
     return final
+# TrainDRLGYM(FromHour,ToHour,weight,Desire)

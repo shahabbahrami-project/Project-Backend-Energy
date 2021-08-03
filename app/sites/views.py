@@ -26,16 +26,22 @@ from django.http import HttpResponse
 import json
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from datetime import datetime, timedelta, time
+# from datetime import datetime, timedelta, time
 import numpy as np
 from numpy.random import randint
 from sites.extra.PriceFunc import PriceFunc
 from numpy import loadtxt
-from datetime import timezone, datetime
+from datetime import timezone
 from sites.MA_Algorithm.MAAlgorithm import moving_average
 from sites.MPC.MPC import MPC
 from sites.DQN.TestDRLGYM import ForwardDRLGYM
+from sites.DQN.TestDRLGYM import LoadTrainedModel
 from sites.DQN.TrainDRLGYM import TrainDRLGYM
+from sites.DQN.UsefulFunc import DailyTempstatistics, OutdoorTemp3
+import pandas as pd
+from datetime import datetime as dt
+import datetime
+
 class BaseSiteAttrViewSet(viewsets.GenericViewSet,
                             mixins.ListModelMixin,
                             mixins.CreateModelMixin,
@@ -167,7 +173,7 @@ def periodselect(i):
     return switcher.get(i,"Invalid period")
 
 def myconverter(o):
-    if isinstance(o, datetime):
+    if isinstance(o, datetime.datetime):
         return o.isoformat()
 
 @csrf_exempt
@@ -205,12 +211,14 @@ def SensorDataGeneration(request):
     Tin_DRL = loadtxt('sites/extra/Tin.csv', delimiter=',')
 
     Cost_DRL= loadtxt('sites/extra/Cost.csv', delimiter=',')
-
-
+    startDay=28
+    endDay=72
+    FixTemp=7
+    Tair=10
     N=np.zeros((Appnum,T))
     for i in range(0,Appnum):
         for t in range(0, T-1):
-            if t%96<=48:
+            if startDay<=t%96<=endDay:
                 if t%3!=0:
                     N[i,t]=N[i,t-1]
                 else:
@@ -221,30 +229,47 @@ def SensorDataGeneration(request):
                 N[i,t]=0
 
 
+    # Tout = np.zeros((Appnum,T))
+    # for i in range(0,Appnum):
+    #     for t in range(0, T-1):
+    #         if t%96<=48:
+    #             if t%3!=0:
+    #                 Tout[i,t]=Tout[i,t-1]
+    #             else:
+    #                 Tout[i,t]=  0.25*randint(56, 64)
+    #                 # while t>=0 and np.absolute(Tout[i,t]-Tout[i,t-1])>10:
+    #                 #     Tout[i,t]= 0.25*randint(56, 64)
+    #         else:
+    #             if t%3!=0:
+    #                 Tout[i,t]=Tout[i,t-1]
+    #             else:
+    #                 Tout[i,t]=  0.25*randint(44, 52)
+
     Tout = np.zeros((Appnum,T))
     for i in range(0,Appnum):
-        for t in range(0, T-1):
-            if t%96<=48:
-                if t%3!=0:
-                    Tout[i,t]=Tout[i,t-1]
-                else:
-                    Tout[i,t]=  0.25*randint(56, 64)
-                    # while t>=0 and np.absolute(Tout[i,t]-Tout[i,t-1])>10:
-                    #     Tout[i,t]= 0.25*randint(56, 64)
-            else:
-                if t%3!=0:
-                    Tout[i,t]=Tout[i,t-1]
-                else:
-                    Tout[i,t]=  0.25*randint(44, 52)
+        df = pd.read_csv('sites/DQN/csvfiles/Hobo_15minutedata_2020.csv')
+        # df.loc[:,'Date'] = pd.to_datetime(df.Date.astype(str)+' '+df.Time.astype(str))
+        df['DateTime']=pd.to_datetime(df['Date'] + ' ' + df['Time'],errors='coerce')
+        df1 = df[['DateTime','Temperature (S-THB 10510805:10502491-1), *C']]
+        df1_tidy = df1.rename(columns = {'Temperature (S-THB 10510805:10502491-1), *C': 'Temp'}, inplace = False)
+        backdays=T
+        today_day = datetime.date(datetime.date.today().year - 1, datetime.date.today().month, datetime.date.today().day)
+        today=dt.combine(today_day, dt.min.time())+datetime.timedelta(minutes=1)
+        past= today-datetime.timedelta(days=backdays)
+        df2=df1_tidy.loc[(df1_tidy['DateTime'] <= today) & (df1_tidy['DateTime'] >= past)]
+        temp=df2['Temp'].to_numpy().astype(np.float)
+        for t in range(0, T):
+            Tout[i,t]=temp[t]+FixTemp
+
 
     Tdes = np.zeros((Appnum,T))
     for i in range(0,Appnum):
         for t in range(0, T-1):
-            if t%96<=48:
+            if startDay<=t%96<=endDay:
                 if t%3!=0:
                     Tdes[i,t]=Tdes[i,t-1]
                 else:
-                    Tdes[i,t]= randint(24, 25)
+                    Tdes[i,t]= randint(20, 21)
             else:
                 if t%3!=0:
                     Tdes[i,t]=Tdes[i,t-1]
@@ -254,17 +279,17 @@ def SensorDataGeneration(request):
     Tset_manual = np.zeros((Appnum,T))
     for i in range(0,Appnum):
         for t in range(0, T-1):
-            if t%96<=48:
-                    Tset_manual[i,t]= 24
+            if startDay<=t%96<=endDay:
+                    Tset_manual[i,t]= 20
             else:
-                    Tset_manual[i,t]= 5
+                    Tset_manual[i,t]= 25
 
     Tin_manual=np.zeros((Appnum,T))
-    Tin_manual[:,0]=12
+    Tin_manual[:,0]=25
     for i in range(0,Appnum):
         for t in range(0, T-1):
-            if Tin_manual[i,t]<Tset_manual[i,t]:
-                Tin_manual[i,t+1]= Tin_manual[i,t]+(Tout[i,t]-Tin_manual[i,t])*z+(30-Tin_manual[i,t])*z
+            if Tin_manual[i,t]>Tset_manual[i,t]:
+                Tin_manual[i,t+1]= Tin_manual[i,t]+(Tout[i,t]-Tin_manual[i,t])*z+(Tair-Tin_manual[i,t])*z
             else:
                 Tin_manual[i,t+1]= Tin_manual[i,t]+(Tout[i,t]-Tin_manual[i,t])*z
 
@@ -275,9 +300,9 @@ def SensorDataGeneration(request):
         for t in range(0, T-1):
             if Tin_manual[i,t]<Tset_manual[i,t]:
 
-                Cost_manual[i,t]=Price[t]*np.absolute(30-Tin_manual[i,t])+N[i,t]*w[i,t]*np.absolute(Tdes[i,t]-Tin_manual[i,t])
+                Cost_manual[i,t]=Price[t]*np.absolute(Tair-Tin_manual[i,t])+N[i,t]*w[i,t]*np.absolute(Tdes[i,t]-Tin_manual[i,t])
             else:
-                Cost_manual[i,t]=0*Price[t]*np.absolute(30-Tin_manual[i,t])+N[i,t]*w[i,t]*np.absolute(Tdes[i,t]-Tin_manual[i,t])
+                Cost_manual[i,t]=0*Price[t]*np.absolute(Tair-Tin_manual[i,t])+N[i,t]*w[i,t]*np.absolute(Tdes[i,t]-Tin_manual[i,t])
             CumCost_manual[i,t]= np.sum(Cost_manual[i,:])
 
     CumCost_DRL= np.cumsum(Cost_DRL)
@@ -296,11 +321,11 @@ def SensorDataGeneration(request):
     # date_now = datetime(2021, 3, 16, 0, 0, 0, 0)
     # date_N_days_ago = datetime.now() - timedelta(minutes=10*T)
     # date_now = datetime(2021, 3, 16, 0, 0, 0, 0)
-    today = datetime.today()
-    date_now=datetime.combine(today, datetime.min.time())
-    date_N_days_ago = date_now - timedelta(minutes=15*T)
+    today = datetime.date.today()
+    date_now=dt.combine(today, dt.min.time())
+    date_N_days_ago = date_now - datetime.timedelta(minutes=15*T)
     # timearray = np.arange(date_N_days_ago, datetime.now(), timedelta(minutes=10)).astype(datetime)
-    timearray = np.arange(date_N_days_ago, date_now, timedelta(minutes=15)).astype(datetime)
+    timearray = np.arange(date_N_days_ago, date_now, datetime.timedelta(minutes=15)).astype(datetime.datetime)
     meas=[]
     for t in range(T):
             row={'time':timearray[t],
@@ -361,11 +386,13 @@ def SensorOnline(request):
 
     w = weight*np.ones((Appnum,T))  #Unit:  cents/C
     test=1
-
+    startDay=24
+    endDay=72
     # Tin_DRL = loadtxt('sites/extra/Tin.csv', delimiter=',')
     #
     # Cost_DRL= loadtxt('sites/extra/Cost.csv', delimiter=',')
-
+    FixTemp=6
+    Tair=10
 
     N=np.zeros((Appnum,T))
     for i in range(0,Appnum):
@@ -394,20 +421,34 @@ def SensorOnline(request):
 
 
     Tout = np.zeros((Appnum,T))
+    # for i in range(0,Appnum):
+    #     for t in range(0, T-1):
+    #         if t%96<=48:
+    #             if t%3!=0:
+    #                 Tout[i,t]=Tout[i,t-1]
+    #             else:
+    #                 Tout[i,t]=  0.25*randint(56, 64)
+    #                 # while t>=0 and np.absolute(Tout[i,t]-Tout[i,t-1])>10:
+    #                 #     Tout[i,t]= 0.25*randint(56, 64)
+    #         else:
+    #             if t%3!=0:
+    #                 Tout[i,t]=Tout[i,t-1]
+    #             else:
+    #                 Tout[i,t]=  0.25*randint(44, 52)
     for i in range(0,Appnum):
-        for t in range(0, T-1):
-            if t%96<=48:
-                if t%3!=0:
-                    Tout[i,t]=Tout[i,t-1]
-                else:
-                    Tout[i,t]=  0.25*randint(56, 64)
-                    # while t>=0 and np.absolute(Tout[i,t]-Tout[i,t-1])>10:
-                    #     Tout[i,t]= 0.25*randint(56, 64)
-            else:
-                if t%3!=0:
-                    Tout[i,t]=Tout[i,t-1]
-                else:
-                    Tout[i,t]=  0.25*randint(44, 52)
+        df = pd.read_csv('sites/DQN/csvfiles/Hobo_15minutedata_2020.csv')
+        # df.loc[:,'Date'] = pd.to_datetime(df.Date.astype(str)+' '+df.Time.astype(str))
+        df['DateTime']=pd.to_datetime(df['Date'] + ' ' + df['Time'],errors='coerce')
+        df1 = df[['DateTime','Temperature (S-THB 10510805:10502491-1), *C']]
+        df1_tidy = df1.rename(columns = {'Temperature (S-THB 10510805:10502491-1), *C': 'Temp'}, inplace = False)
+        backdays=0
+        today_day = datetime.date(datetime.date.today().year - 1, datetime.date.today().month, datetime.date.today().day)
+        today=dt.combine(today_day, dt.min.time())+datetime.timedelta(minutes=1)
+        tomorrow=dt.combine(today_day, dt.min.time())+datetime.timedelta(hours=24)
+        df2=df1_tidy.loc[(df1_tidy['DateTime'] >= today) & (df1_tidy['DateTime'] <= tomorrow)]
+        temp=df2['Temp'].to_numpy().astype(np.float)
+        for t in range(0, T):
+            Tout[i,t]=temp[t]+FixTemp
 
     Tdes = np.zeros((Appnum,T))
     for i in range(0,Appnum):
@@ -428,20 +469,20 @@ def SensorOnline(request):
     for i in range(0,Appnum):
         for t in range(0, T-1):
             if t%96<FromHour:
-                    Tset_manual[i,t]= 18
+                    Tset_manual[i,t]= 25
             elif t%96>=FromHour and t%96<=ToHour:
-                    Tset_manual[i,t]=  Desire
-            elif t%96>ToHour and t%96<=48:
-                    Tset_manual[i,t]= 18
-            elif t%96>ToHour and t%96>48:
-                    Tset_manual[i,t]= 5
+                    Tset_manual[i,t]=  20
+            elif t%96>ToHour and t%96<=endDay:
+                    Tset_manual[i,t]= 20
+            elif t%96>ToHour and t%96>endDay:
+                    Tset_manual[i,t]= 25
 
     Tin_manual=np.zeros((Appnum,T))
-    Tin_manual[:,0]=12
+    Tin_manual[:,0]=25
     for i in range(0,Appnum):
         for t in range(0, T-1):
-            if Tin_manual[i,t]<Tset_manual[i,t]:
-                Tin_manual[i,t+1]= Tin_manual[i,t]+(Tout[i,t]-Tin_manual[i,t])*z+(30-Tin_manual[i,t])*z
+            if Tin_manual[i,t]>Tset_manual[i,t]:
+                Tin_manual[i,t+1]= Tin_manual[i,t]+(Tout[i,t]-Tin_manual[i,t])*z+(Tair-Tin_manual[i,t])*z
             else:
                 Tin_manual[i,t+1]= Tin_manual[i,t]+(Tout[i,t]-Tin_manual[i,t])*z
 
@@ -451,9 +492,9 @@ def SensorOnline(request):
     for i in range(0,Appnum):
         for t in range(0, T-1):
             if Tin_manual[i,t]<Tset_manual[i,t]:
-                Cost_manual[i,t]=Price[t]*np.absolute(30-Tin_manual[i,t])+N[i,t]*w[i,t]*np.absolute(Tdes[i,t]-Tin_manual[i,t])
+                Cost_manual[i,t]=Price[t]*np.absolute(Tair)+N[i,t]*w[i,t]*np.absolute(Tdes[i,t]-Tin_manual[i,t])
             else:
-                Cost_manual[i,t]=0*Price[t]*np.absolute(30-Tin_manual[i,t])+N[i,t]*w[i,t]*np.absolute(Tdes[i,t]-Tin_manual[i,t])
+                Cost_manual[i,t]=0*Price[t]*np.absolute(Tair)+N[i,t]*w[i,t]*np.absolute(Tdes[i,t]-Tin_manual[i,t])
             CumCost_manual[i,t]= np.sum(Cost_manual[i,:])
 
     Tout_MA = np.zeros((Appnum,T))
@@ -488,21 +529,21 @@ def SensorOnline(request):
         print(weight)
         print(Desire)
         flag=TrainDRLGYM(FromHour,ToHour,weight,Desire)
-        print(flag)
+        dqn=LoadTrainedModel(FromHour,ToHour,weight,Desire)
         for t in range(T):
             print('time=',t)
             if t>=1:
                 sample=[Tin_DRL[0,t-1],Tdes[0,t],Tout[0,t],Price[t],N[0,t],t]
-                Tair_DRL[0,t], Tin_DRL[0,t], Tset_DRL[0,t], Cost_DRL[0,t]=ForwardDRLGYM(FromHour,ToHour,weight,Desire, sample)
+                Tair_DRL[0,t], Tin_DRL[0,t], Tset_DRL[0,t], Cost_DRL[0,t]=ForwardDRLGYM(dqn,weight, sample)
             else:
                 sample=[12,Tdes[0,t],Tout[0,t],Price[t],N[0,t],t]
-                Tair_DRL[0,t], Tin_DRL[0,t], Tset_DRL[0,t], Cost_DRL[0,t]=ForwardDRLGYM(FromHour,ToHour,weight,Desire, sample)
+                Tair_DRL[0,t], Tin_DRL[0,t], Tset_DRL[0,t], Cost_DRL[0,t]=ForwardDRLGYM(dqn,weight, sample)
             CumCost_DRL[0,t]= np.sum(Cost_DRL[0,:])
-    today = datetime.today()
-    date_now=datetime.combine(today, datetime.min.time())
-    date_N_days_ago = date_now - timedelta(minutes=15*T)
+    today = datetime.date.today()
+    date_now=dt.combine(today, dt.min.time())
+    date_N_days_ago = date_now - datetime.timedelta(minutes=15*T)
     # timearray = np.arange(date_N_days_ago, datetime.now(), timedelta(minutes=10)).astype(datetime)
-    timearray = np.arange(date_N_days_ago, date_now, timedelta(minutes=15)).astype(datetime)
+    timearray = np.arange(date_N_days_ago, date_now, datetime.timedelta(minutes=15)).astype(datetime.datetime)
     meas=[]
     for t in range(T):
             row={'time':timearray[t],

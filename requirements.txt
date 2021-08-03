@@ -10,7 +10,7 @@ six==1.15.0
 django-cors-headers
 flake8>=3.6.0,<3.7.0
 gunicorn==20.1.0
-tensorflow-cpu==2.3.3
+tensorflow-cpu==2.3.0
 gym
 keras
 keras-rl2

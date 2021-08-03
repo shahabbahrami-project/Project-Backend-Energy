@@ -22,4 +22,3 @@ def PriceFunc(D):
         if i>=84 and i<=96:
             Price[i]=0.25;
     return Price
-
