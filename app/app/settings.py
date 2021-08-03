@@ -22,20 +22,28 @@ os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
 # SECURITY WARNING: keep the secret key used in production secret!
 # SECRET_KEY = "t&_(+2gvvjmp(bm*h%dl0@eu*&jzrr6gx8y5eoy8v+@$l#q#ao"
-SECRET_KEY = os.environ.get("SECRET_KEY")
-
-DEBUG = int(os.environ.get("DEBUG", default=0))
+# SECRET_KEY = os.environ.get("SECRET_KEY")
+#
+# DEBUG = int(os.environ.get("DEBUG", default=0))
 
 # 'DJANGO_ALLOWED_HOSTS' should be a single string of hosts with a space between each.
 # For example: 'DJANGO_ALLOWED_HOSTS=localhost 127.0.0.1 [::1]'
-ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS").split(" ")
+# ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS").split(" ")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG = True
 
 # ALLOWED_HOSTS = ["127.0.0.1"]
-CORS_ORIGIN_WHITELIST = ["http://localhost:3001", "http://localhost:3000"]
 
+# SECRET_KEY = os.environ.get("SECRET_KEY")
+# DEBUG = int(os.environ.get("DEBUG", default=0))
+# ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS").split(" ")
+# CORS_ORIGIN_WHITELIST = ["http://localhost:3001", "http://localhost:3000"]
+
+SECRET_KEY = "t&_(+2gvvjmp(bm*h%dl0@eu*&jzrr6gx8y5eoy8v+@$l#q#ao"
+DEBUG = 1
+DJANGO_ALLOWED_HOSTS = "127.0.0.1"
+CORS_ORIGIN_WHITELIST = ["http://localhost:3001", "http://localhost:3000"]
 
 # Application definition
 
@@ -90,18 +98,18 @@ WSGI_APPLICATION = "app.wsgi.application"
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
 
 DATABASES = {
-    # 'default': {
-    #     'ENGINE': 'django.db.backends.sqlite3',
-    #     'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-    # }
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "HOST": os.environ.get("DB_HOST"),
-        "NAME": os.environ.get("DB_NAME"),
-        "USER": os.environ.get("DB_USER"),
-        "PASSWORD": os.environ.get("DB_PASS"),
-        "PORT": 5432
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
+    # "default": {
+    #     "ENGINE": "django.db.backends.postgresql",
+    #     "HOST": os.environ.get("DB_HOST"),
+    #     "NAME": os.environ.get("DB_NAME"),
+    #     "USER": os.environ.get("DB_USER"),
+    #     "PASSWORD": os.environ.get("DB_PASS"),
+    #     "PORT": 5432
+    # }
 }
 
 

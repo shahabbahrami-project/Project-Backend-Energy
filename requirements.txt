@@ -14,5 +14,4 @@ tensorflow-cpu==2.3.0
 gym
 keras
 keras-rl2
-
-
+cvxpy

@@ -213,11 +213,11 @@ def SensorDataGeneration(request):
     Cost_DRL= loadtxt('sites/extra/Cost.csv', delimiter=',')
     startDay=28
     endDay=72
-    FixTemp=7
+    FixTemp=17
     Tair=10
     N=np.zeros((Appnum,T))
     for i in range(0,Appnum):
-        for t in range(0, T-1):
+        for t in range(0, T):
             if startDay<=t%96<=endDay:
                 if t%3!=0:
                     N[i,t]=N[i,t-1]
@@ -264,7 +264,7 @@ def SensorDataGeneration(request):
 
     Tdes = np.zeros((Appnum,T))
     for i in range(0,Appnum):
-        for t in range(0, T-1):
+        for t in range(0, T):
             if startDay<=t%96<=endDay:
                 if t%3!=0:
                     Tdes[i,t]=Tdes[i,t-1]
@@ -278,7 +278,7 @@ def SensorDataGeneration(request):
 
     Tset_manual = np.zeros((Appnum,T))
     for i in range(0,Appnum):
-        for t in range(0, T-1):
+        for t in range(0, T):
             if startDay<=t%96<=endDay:
                     Tset_manual[i,t]= 20
             else:
@@ -391,12 +391,12 @@ def SensorOnline(request):
     # Tin_DRL = loadtxt('sites/extra/Tin.csv', delimiter=',')
     #
     # Cost_DRL= loadtxt('sites/extra/Cost.csv', delimiter=',')
-    FixTemp=6
+    FixTemp=8
     Tair=10
 
     N=np.zeros((Appnum,T))
     for i in range(0,Appnum):
-        for t in range(0, T-1):
+        for t in range(0, T):
             # if t%96<=48:
             #     if t%3!=0:
             #         N[i,t]=N[i,t-1]
@@ -452,7 +452,7 @@ def SensorOnline(request):
 
     Tdes = np.zeros((Appnum,T))
     for i in range(0,Appnum):
-        for t in range(0, T-1):
+        for t in range(0, T):
             if t%96<FromHour:
                 if t%3!=0:
                     Tdes[i,t]=Tdes[i,t-1]
@@ -469,13 +469,13 @@ def SensorOnline(request):
     for i in range(0,Appnum):
         for t in range(0, T-1):
             if t%96<FromHour:
-                    Tset_manual[i,t]= 25
+                    Tset_manual[i,t]= 27
             elif t%96>=FromHour and t%96<=ToHour:
                     Tset_manual[i,t]=  20
             elif t%96>ToHour and t%96<=endDay:
                     Tset_manual[i,t]= 20
             elif t%96>ToHour and t%96>endDay:
-                    Tset_manual[i,t]= 25
+                    Tset_manual[i,t]= 27
 
     Tin_manual=np.zeros((Appnum,T))
     Tin_manual[:,0]=25
@@ -490,11 +490,11 @@ def SensorOnline(request):
 
     Cost_manual=np.zeros((Appnum,T))
     for i in range(0,Appnum):
-        for t in range(0, T-1):
-            if Tin_manual[i,t]<Tset_manual[i,t]:
-                Cost_manual[i,t]=Price[t]*np.absolute(Tair)+N[i,t]*w[i,t]*np.absolute(Tdes[i,t]-Tin_manual[i,t])
+        for t in range(0, T):
+            if Tin_manual[i,t]>Tset_manual[i,t]:
+                Cost_manual[i,t]=Price[t]*np.absolute(30-Tair)+N[i,t]*w[i,t]*np.absolute(Tdes[i,t]-Tin_manual[i,t])
             else:
-                Cost_manual[i,t]=0*Price[t]*np.absolute(Tair)+N[i,t]*w[i,t]*np.absolute(Tdes[i,t]-Tin_manual[i,t])
+                Cost_manual[i,t]=0*Price[t]*np.absolute(30-Tair)+N[i,t]*w[i,t]*np.absolute(Tdes[i,t]-Tin_manual[i,t])
             CumCost_manual[i,t]= np.sum(Cost_manual[i,:])
 
     Tout_MA = np.zeros((Appnum,T))
@@ -511,10 +511,11 @@ def SensorOnline(request):
                 Tair_MPC[0,t], Tin_MPC[0,t], Tset_MPC[0,t], Cost_MPC[0,t]=MPC(Tin_MPC[0,t-1],Tout[0,t],Tdes[0,t],N[0,t],Price[t],w[0,t])
             else:
                 Tair_MPC[0,t], Tin_MPC[0,t], Tset_MPC[0,t], Cost_MPC[0,t]=MPC(Tin_manual[0,t],Tout[0,t],Tdes[0,t],N[0,t],Price[t],w[0,t])
-            if np.absolute(Tair_MPC[0,t]-Tin_MPC[0,t])<=0.5:
-                Tset_MPC[0,t]=Tin_MPC[0,t]/2
+            if Tair_MPC[0,t]<Tin_MPC[0,t]:
+                Tset_MPC[0,t]= np.maximum(Tin_MPC[0,t]-5, 10)
+
             else:
-                Tset_MPC[0,t]=np.minimum(Tin_MPC[0,t]+3, 30)
+                Tset_MPC[0,t]=Tin_MPC[0,t]*1.2
             CumCost_MPC[0,t]= np.sum(Cost_MPC[0,:])
 
     Cost_DRL=np.zeros((Appnum,T))

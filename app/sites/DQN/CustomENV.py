@@ -26,7 +26,7 @@ class ShowerEnv(Env):
         self.ToutAvg=toutavg
         self.ToutStd=toutstd
         # Set start temp
-        self.state = np.array([12, Desire(0,self.desire,self.FromHour,self.ToHour),OutdoorTemp3(self.ToutAvg[0],self.ToutStd[0]),Price(0),People(0,self.FromHour,self.ToHour),0])
+        self.state = np.array([25, Desire(0,self.desire,self.FromHour,self.ToHour),OutdoorTemp3(self.ToutAvg[0],self.ToutStd[0]),Price(0),People(0,self.FromHour,self.ToHour),0])
         # Set time slots in a day
         self.day_length = 96
 
@@ -58,10 +58,10 @@ class ShowerEnv(Env):
         # Reduce shower length by 1 second
         self.day_length -= 1
         # Calculate reward
-        if airTemp>Prev_IndTemp:
-            reward = -(Price(time)*abs(float(airTemp))+People_now*self.W*abs(float(Desire_now)-self.state[0]))
+        if airTemp<Prev_IndTemp:
+            reward = -0.8*(Price(time)*abs(float(30-airTemp))+People_now*self.W*abs(float(Desire_now)-self.state[0]))
         else:
-            reward = -(People_now*self.W*abs(float(Desire_now)-self.state[0]))
+            reward = -0.8*(People_now*self.W*abs(float(Desire_now)-self.state[0]))
 
         # Check if shower is done
         if self.day_length <= 0:
@@ -84,7 +84,7 @@ class ShowerEnv(Env):
     def reset(self):
         # Reset shower temperature
 
-        self.state = np.array([12, Desire(0,self.desire,self.FromHour,self.ToHour),OutdoorTemp3(self.ToutAvg[0],self.ToutStd[0]),Price(0),People(0,self.FromHour,self.ToHour),0])
+        self.state = np.array([25, Desire(0,self.desire,self.FromHour,self.ToHour),OutdoorTemp3(self.ToutAvg[0],self.ToutStd[0]),Price(0),People(0,self.FromHour,self.ToHour),0])
         # Reset shower time
         self.day_length = 96
         return self.state
