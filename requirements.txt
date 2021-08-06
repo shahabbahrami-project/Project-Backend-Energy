@@ -16,3 +16,4 @@ keras
 keras-rl2
 cvxpy
 celery==5.1.2
+django-celery-beat==2.2.1

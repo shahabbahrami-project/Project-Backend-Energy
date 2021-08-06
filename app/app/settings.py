@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     "core",
     "user",
     "sites",
+    "django_celery_beat",
 ]
 
 MIDDLEWARE = [
@@ -159,3 +160,13 @@ MEDIA_ROOT = "/vol/web/media"
 # STATIC_ROOT = "/vol/web/static"
 
 AUTH_USER_MODEL = "core.User"
+
+
+CELERY_BEAT_SCHEDULE = {
+    "scheduled_task": {
+        "task": "sites.tasks.add",
+        "schedule": 5.0,
+        "args": (4, 3),
+    },
+}
+# celery -A app beat -l INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler
