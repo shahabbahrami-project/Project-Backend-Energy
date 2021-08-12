@@ -4,8 +4,11 @@ import os
 from celery import Celery
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'app.settings')
+result_backend = 'redis://localhost/0'
 
 app = Celery('app')
+app.conf.result_backend = 'redis://localhost:6379/0'
+app.conf.broker_url = 'redis://localhost:6379/0'
 
 
 app.conf.beat_schedule = {

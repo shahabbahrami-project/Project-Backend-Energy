@@ -5,7 +5,7 @@ from rest_framework import viewsets, mixins, status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 
-from core.models import Sensor, Site, SensorType, SensorData, Device, DeviceType, DeviceData, TrainingResult
+from core.models import Sensor, Site, SensorType, SensorData, Device, DeviceType, DeviceData, TrainingResult, CeleryTask
 
 from sites import serializers
 
@@ -537,9 +537,15 @@ def SensorOnline(request):
         actions = env.action_space.n
 
         # del model
-        model = build_model(states, actions)
-        res = TrainingResult(model, dqn)
-        res.save()
+        # model = build_model(states, actions)
+        # res = TrainingResult(model, dqn)
+        # res.save()
+        x = tasks.add.delay(3, 4)
+        print(x)
+        celeryTask = CeleryTask(device=None, job_id=x.task_id)
+        celeryTask.save()
+        celeryTask.waitForCompletion()
+
         for t in range(T):
             print('time=', t)
             if t >= 1:
