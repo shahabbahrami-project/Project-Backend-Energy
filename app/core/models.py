@@ -3,7 +3,7 @@ import os
 from django.db import models
 from django.db.models import F
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, \
-                                        PermissionsMixin
+    PermissionsMixin
 from django.conf import settings
 from datetime import datetime
 # class UserManager(BaseUserManager):
@@ -149,6 +149,7 @@ class SensorType(models.Model):
     def __str__(self):
         return self.name
 
+
 class Sensor(models.Model):
     """Sensor to be used for a site"""
     name = models.CharField(max_length=255)
@@ -164,7 +165,7 @@ class Sensor(models.Model):
     lastRealValue = models.FloatField(default=0.0, null=False, blank=False)
     lastAlgoValue = models.FloatField(default=0.0, null=False, blank=False)
     lastTimeValue = models.DateTimeField(null=True, blank=False)
-    created_at=models.DateTimeField(default=datetime.now)
+    created_at = models.DateTimeField(default=datetime.now)
 
     def __str__(self):
         return self.name
@@ -206,12 +207,14 @@ class Device(models.Model):
     sensors = models.ManyToManyField('Sensor', blank=True)
     stateReal = models.CharField(max_length=255, null=True, choices=States)
     stateAlgo = models.CharField(max_length=255,  null=True, choices=States)
-    lastRealPowerValue = models.FloatField(default=0.0, null=False, blank=False)
-    lastAlgoPowerValue = models.FloatField(default=0.0, null=False, blank=False)
+    lastRealPowerValue = models.FloatField(
+        default=0.0, null=False, blank=False)
+    lastAlgoPowerValue = models.FloatField(
+        default=0.0, null=False, blank=False)
     costReal = models.FloatField(default=0.0, null=False, blank=False)
     costAlgo = models.FloatField(default=0.0, null=False, blank=False)
     lastTimeValue = models.DateTimeField(null=True, blank=False)
-    created_at=models.DateTimeField(default=datetime.now)
+    created_at = models.DateTimeField(default=datetime.now)
 
     def __str__(self):
         return self.name
@@ -219,12 +222,12 @@ class Device(models.Model):
 
 class SensorData(models.Model):
     """Sensor to be used for a site"""
-    name= models.ForeignKey(
+    name = models.ForeignKey(
         Sensor,
         on_delete=models.CASCADE,
         null=True
     )
-    type= models.ForeignKey(
+    type = models.ForeignKey(
         SensorType,
         on_delete=models.CASCADE,
         null=True
@@ -239,12 +242,14 @@ class SensorData(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.pk:
-            Sensor.objects.filter(pk=self.name_id).update(lastRealValue=self.realvalue)
-            Sensor.objects.filter(pk=self.name_id).update(lastAlgoValue=self.algovalue)
+            Sensor.objects.filter(pk=self.name_id).update(
+                lastRealValue=self.realvalue)
+            Sensor.objects.filter(pk=self.name_id).update(
+                lastAlgoValue=self.algovalue)
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return str(self.name) + "\t \t \t"+ str(self.datetime)
+        return str(self.name) + "\t \t \t" + str(self.datetime)
 
 
 class DeviceData(models.Model):
@@ -253,7 +258,7 @@ class DeviceData(models.Model):
         ('On', 'On'),
         ('Off', 'Off'),
     )
-    name= models.ForeignKey(
+    name = models.ForeignKey(
         Device,
         on_delete=models.CASCADE,
         null=True
@@ -265,22 +270,31 @@ class DeviceData(models.Model):
     datetime = models.DateTimeField(null=True, blank=False)
     realpowervalue = models.FloatField(default=0.0, null=False, blank=False)
     algopowervalue = models.FloatField(default=0.0, null=False, blank=False)
-    realstatevalue = models.CharField(max_length=255, null=True, choices=States)
-    algostatevalue = models.CharField(max_length=255, null=True, choices=States)
+    realstatevalue = models.CharField(
+        max_length=255, null=True, choices=States)
+    algostatevalue = models.CharField(
+        max_length=255, null=True, choices=States)
     costreal = models.FloatField(default=0.0, null=False, blank=False)
     costalgo = models.FloatField(default=0.0, null=False, blank=False)
+
     def save(self, *args, **kwargs):
         if not self.pk:
-            Device.objects.filter(pk=self.name_id).update(lastRealPowerValue=self.realpowervalue)
-            Device.objects.filter(pk=self.name_id).update(lastAlgoPowerValue=self.algopowervalue)
-            Device.objects.filter(pk=self.name_id).update(stateReal=self.realstatevalue)
-            Device.objects.filter(pk=self.name_id).update(stateAlgo=self.algostatevalue)
-            Device.objects.filter(pk=self.name_id).update(costReal=self.costreal)
-            Device.objects.filter(pk=self.name_id).update(costAlgo=self.costalgo)
+            Device.objects.filter(pk=self.name_id).update(
+                lastRealPowerValue=self.realpowervalue)
+            Device.objects.filter(pk=self.name_id).update(
+                lastAlgoPowerValue=self.algopowervalue)
+            Device.objects.filter(pk=self.name_id).update(
+                stateReal=self.realstatevalue)
+            Device.objects.filter(pk=self.name_id).update(
+                stateAlgo=self.algostatevalue)
+            Device.objects.filter(pk=self.name_id).update(
+                costReal=self.costreal)
+            Device.objects.filter(pk=self.name_id).update(
+                costAlgo=self.costalgo)
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return str(self.name) + "\t \t \t"+ str(self.datetime)
+        return str(self.name) + "\t \t \t" + str(self.datetime)
 
 
 class Site(models.Model):
@@ -290,14 +304,58 @@ class Site(models.Model):
         on_delete=models.CASCADE,
     )
     name = models.CharField(max_length=255)
-    locationX=models.FloatField(null=True, blank=True)
-    locationY=models.FloatField(null=True, blank=True)
+    locationX = models.FloatField(null=True, blank=True)
+    locationY = models.FloatField(null=True, blank=True)
     link = models.CharField(max_length=255, blank=True)
     sensors = models.ManyToManyField('Sensor', blank=True)
     devices = models.ManyToManyField('Device', blank=True)
     timezone = models.CharField(max_length=255, blank=True)
     image = models.ImageField(null=True, upload_to=site_image_file_path)
-    created_at=models.DateTimeField(default=datetime.now)
+    created_at = models.DateTimeField(default=datetime.now)
 
     def __str__(self):
         return self.name
+
+
+class TrainingResult(models.Model):
+    device = models.OneToOneField(Device, on_delete=models.CASCADE, null=True)
+    last_updated_at = models.DateTimeField(default=datetime.now)
+    model = models.JSONField()
+    weights_bin = models.BinaryField(editable=True)
+
+    def __init__(self, trained_model, trained_weights, device=None, *args, **kwargs):
+        super(models.Model, self).__init__(*args, **kwargs)
+        self.device = device
+        self.last_updated_at = datetime.now()
+        self.trained_model = trained_model
+        self.trained_weights = trained_weights
+
+    # @classmethod
+    # def create(cls, trained_model, trained_weights, device=None):
+    #     res = cls(device)
+    #     self.last_updated_at = datetime.now()
+    #     self.trained_model = trained_model
+    #     self.trained_weights = trained_weights
+    #     # do something with the book
+    #     return res
+
+    def save(self, *args, **kwargs):
+        # locate json and h5 files
+        import json
+        weights_file = 'weights.h5'
+        # convert h5 to bin and json to string / hash table?
+        model_json = self.trained_model.to_json()
+        self.model = model_json
+        self.trained_weights.save_weights(weights_file, overwrite=True)
+        Bytes = b''
+        with open(weights_file, "rb") as f:
+            while (byte := f.read(1)):
+                Bytes += byte
+        self.weights_bin = Bytes
+        os.remove(weights_file)
+        assert not os.path.exists(weights_file)
+        # save bin and json to db
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.device}"

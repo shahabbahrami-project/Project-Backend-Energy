@@ -7,6 +7,7 @@ from rl.agents import DQNAgent
 from rl.policy import BoltzmannQPolicy
 from rl.memory import SequentialMemory
 
+
 def build_model(states, actions):
     model = Sequential()
     model.add(Dense(50, activation='tanh', input_shape=states))
@@ -15,17 +16,19 @@ def build_model(states, actions):
     model.add(Dense(actions, activation='linear'))
     return model
 
+
 def build_agent(model, actions):
     policy = BoltzmannQPolicy()
     memory = SequentialMemory(limit=50000, window_length=1)
     dqn = DQNAgent(model=model, memory=memory, policy=policy,
-                  nb_actions=actions, nb_steps_warmup=10, target_model_update=30000)
+                   nb_actions=actions, nb_steps_warmup=10, target_model_update=30000)
     return dqn
 
-def TrainDRLGYM(FromHour,ToHour,W,Desire):
-    env = ShowerEnv(FromHour,ToHour,W,Desire)
+
+def TrainDRLGYM(FromHour, ToHour, W, Desire):
+    env = ShowerEnv(FromHour, ToHour, W, Desire)
     states = env.observation_space.shape
-    actions =env.action_space.n
+    actions = env.action_space.n
 
     # del model
     model = build_model(states, actions)
@@ -41,6 +44,6 @@ def TrainDRLGYM(FromHour,ToHour,W,Desire):
     with open("dqn_model.json", "w") as json_file:
         json_file.write(model_json)
     dqn.save_weights('dqn_weights.h5', overwrite=True)
-    final=True
-    return final
+    final = True
+    return model, dqn
 # TrainDRLGYM(FromHour,ToHour,weight,Desire)

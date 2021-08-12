@@ -5,7 +5,7 @@ from rest_framework import viewsets, mixins, status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 
-from core.models import Sensor, Site, SensorType, SensorData, Device, DeviceType, DeviceData
+from core.models import Sensor, Site, SensorType, SensorData, Device, DeviceType, DeviceData, TrainingResult
 
 from sites import serializers
 
@@ -35,7 +35,7 @@ from datetime import timezone
 from sites.MA_Algorithm.MAAlgorithm import moving_average
 from sites.MPC.MPC import MPC
 from sites.DQN.TestDRLGYM import ForwardDRLGYM
-from sites.DQN.TestDRLGYM import LoadTrainedModel
+from sites.DQN.TestDRLGYM import LoadTrainedModel, build_model
 from sites.DQN.TrainDRLGYM import TrainDRLGYM
 from sites.DQN.UsefulFunc import DailyTempstatistics, OutdoorTemp3
 import pandas as pd
@@ -529,6 +529,17 @@ def SensorOnline(request):
         print(weight)
         print(Desire)
         dqn = LoadTrainedModel(FromHour, ToHour, weight, Desire)
+        # model = {}
+        from .DQN.CustomENV import ShowerEnv
+
+        env = ShowerEnv(24, 72, 10, 20)
+        states = env.observation_space.shape
+        actions = env.action_space.n
+
+        # del model
+        model = build_model(states, actions)
+        res = TrainingResult(model, dqn)
+        res.save()
         for t in range(T):
             print('time=', t)
             if t >= 1:
@@ -547,7 +558,7 @@ def SensorOnline(request):
     date_now = dt.combine(today, dt.min.time())
     date_N_days_ago = date_now - datetime.timedelta(minutes=15*T)
     # mearray = np.arange(date_N_days_ago, datetime.now(), timedelta(minutes=10)).astype(datetime)
-    mearray = np.arange(date_N_days_ago, date_now, datetime.timedelta(
+    timearray = np.arange(date_N_days_ago, date_now, datetime.timedelta(
         minutes=15)).astype(datetime.datetime)
     meas = []
     for t in range(T):
