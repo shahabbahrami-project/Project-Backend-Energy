@@ -18,5 +18,5 @@ app_name = 'sites'
 urlpatterns = [
     path('', include(router.urls)),
     path('historydata/', views.SensorDataGeneration),
-    path('onlinedata/', views.SensorOnline),
+    path('onlinedata/<int:device_id>', views.SensorOnline),
 ]

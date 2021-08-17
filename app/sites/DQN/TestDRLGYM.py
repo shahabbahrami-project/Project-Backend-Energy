@@ -8,6 +8,9 @@ from rl.policy import BoltzmannQPolicy
 from rl.memory import SequentialMemory
 from sites.DQN.TrainDRLGYM import TrainDRLGYM
 from tensorflow.keras.optimizers import Adam
+from core.models import TrainingResult
+import io
+import h5py
 
 
 def build_agent(model, actions):
@@ -27,21 +30,25 @@ def build_model(states, actions):
     return model
 
 
-def TestDRLGYM(FromHour, ToHour, W, Desire):
+def TestDRLGYM(FromHour, ToHour, W, Desire, device_id=1):
     env = ShowerEnv(FromHour, ToHour, W, Desire)
     states = env.observation_space.shape
     actions = env.action_space.n
     model = build_model(states, actions)
     dqn = build_agent(model, actions)
+
+    obj = Tra
+    f = io.BytesIO()
+    h = h5py.File(f, 'r')
+
     dqn.compile(Adam(lr=2e-3), metrics=['mae'])
     dqn.load_weights('sites/DQN/dqn_weights.h5f')
     scores = dqn.test(env, nb_episodes=1, visualize=False)
     print(np.mean(scores.history['episode_reward']))
 
 
-def LoadTrainedModel(FromHour, ToHour, W, Desire):
+def LoadTrainedModel(FromHour, ToHour, W, Desire, device_id=1):
     env = ShowerEnv(FromHour, ToHour, W, Desire)
-    print('start')
     states = env.observation_space.shape
     actions = env.action_space.n
     json_file = open('dqn_model.json', 'r')
@@ -52,6 +59,9 @@ def LoadTrainedModel(FromHour, ToHour, W, Desire):
     dqn = build_agent(model, actions)
     dqn.compile(Adam(lr=2e-3), metrics=['mae'])
     dqn.load_weights('dqn_weights.h5')
+    obj = TrainingResult.objects.get(device_id=device_id)
+    print(obj)
+    # if obj:
     return dqn
 
 

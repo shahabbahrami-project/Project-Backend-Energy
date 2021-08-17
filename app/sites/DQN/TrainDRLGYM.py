@@ -29,11 +29,9 @@ def TrainDRLGYM(FromHour, ToHour, W, Desire):
     env = ShowerEnv(FromHour, ToHour, W, Desire)
     states = env.observation_space.shape
     actions = env.action_space.n
-
-    # del model
     model = build_model(states, actions)
-
     model.summary()
+
     dqn = build_agent(model, actions)
     dqn.compile(Adam(lr=2e-3), metrics=['mae'])
     dqn.fit(env, nb_steps=5000, visualize=False, verbose=1)
@@ -41,9 +39,4 @@ def TrainDRLGYM(FromHour, ToHour, W, Desire):
     scores = dqn.test(env, nb_episodes=1, visualize=False)
     print(np.mean(scores.history['episode_reward']))
     model_json = model.to_json()
-    with open("dqn_model.json", "w") as json_file:
-        json_file.write(model_json)
-    dqn.save_weights('dqn_weights.h5', overwrite=True)
-    final = True
-    return model, dqn
-# TrainDRLGYM(FromHour,ToHour,weight,Desire)
+    return dqn, model_json

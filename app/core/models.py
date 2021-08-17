@@ -1,13 +1,15 @@
 import uuid
 import time
-from celery.result import AsyncResult
+# from celery.result import AsyncResult
 import os
 from django.db import models
 from django.db.models import F
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, \
     PermissionsMixin
 from django.conf import settings
+from django.utils.timezone import now
 from datetime import datetime
+from .celery import app
 # class UserManager(BaseUserManager):
 #
 #     def create_user(self, email, password=None, **extra_fields):
@@ -329,63 +331,20 @@ class CeleryTask(models.Model):
         return self.job_id
 
     def waitForCompletion(self):
-        task = AsyncResult(self.job_id)
-        print(task)
-        print(task.ready())
+        print(self.job_id)
+        task = app.AsyncResult(self.job_id)
         while not task.ready():
             time.sleep(1)
         self.done = True
-        self.completed_at = datetime.datetime.now()
+        self.completed_at = datetime.now()
         self.save()
-
-    # device=...
-    # completion_at...
-    # job_id= (is from celery)
-    # status=(0,1) 0 means not completed...1 means done!
-    # when celery starts a training atsk for a device, a row is generated here with status 0
-    # when celery completes the task that row is changed to status 1
-    # another approach is just track completed tasks... so you only add a row when a job is completed by celery (this one is easer). You do not need status here anymore
 
 
 class TrainingResult(models.Model):
     device = models.OneToOneField(Device, on_delete=models.CASCADE, null=True)
-    last_updated_at = models.DateTimeField(default=datetime.now)
-    model = models.JSONField()
+    model = models.JSONField(null=True)
     weights_bin = models.BinaryField(editable=True)
-
-    # def __init__(self, trained_model, trained_weights, device=None, *args, **kwargs):
-    #     super(models.Model, self).__init__(*args, **kwargs)
-    #     self.device = device
-    #     self.last_updated_at = datetime.now()
-    #     self.trained_model = trained_model
-    #     self.trained_weights = trained_weights
-
-    # @classmethod
-    # def create(cls, trained_model, trained_weights, device=None):
-    #     res = cls(device)
-    #     self.last_updated_at = datetime.now()
-    #     self.trained_model = trained_model
-    #     self.trained_weights = trained_weights
-    #     # do something with the book
-    #     return res
-
-    # def save(self, *args, **kwargs):
-    #     # locate json and h5 files
-    #     import json
-    #     weights_file = 'weights.h5'
-    #     # convert h5 to bin and json to string / hash table?
-    #     model_json = self.trained_model.to_json()
-    #     self.model = model_json
-    #     self.trained_weights.save_weights(weights_file, overwrite=True)
-    #     Bytes = b''
-    #     with open(weights_file, "rb") as f:
-    #         while (byte := f.read(1)):
-    #             Bytes += byte
-    #     self.weights_bin = Bytes
-    #     os.remove(weights_file)
-    #     assert not os.path.exists(weights_file)
-    #     # save bin and json to db
-    #     super().save(*args, **kwargs)
+    last_updated_at = models.DateTimeField(default=now)
 
     def __str__(self):
         return f"{self.device}"

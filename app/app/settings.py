@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     "user",
     "sites",
     "django_celery_beat",
+    "django_celery_results",
 ]
 
 MIDDLEWARE = [
@@ -160,4 +161,3 @@ MEDIA_ROOT = "/vol/web/media"
 # STATIC_ROOT = "/vol/web/static"
 
 AUTH_USER_MODEL = "core.User"
-

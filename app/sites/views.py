@@ -364,7 +364,7 @@ def SensorDataGeneration(request):
 
 
 @csrf_exempt
-def SensorOnline(request):
+def SensorOnline(request, device_id=1):
     z = np.exp(-300/130)
     body_unicode = request.body.decode('utf-8')
     body = json.loads(body_unicode)
@@ -522,32 +522,13 @@ def SensorOnline(request):
     Tair_DRL = np.zeros((Appnum, T))
     Tin_DRL = np.zeros((Appnum, T))
     Tset_DRL = np.zeros((Appnum, T))
-    print(type)
     if type == "DRL" or type == "DRLMPCManual":
-        print(FromHour)
-        print(ToHour)
-        print(weight)
-        print(Desire)
         dqn = LoadTrainedModel(FromHour, ToHour, weight, Desire)
-        # model = {}
-        from .DQN.CustomENV import ShowerEnv
 
-        env = ShowerEnv(24, 72, 10, 20)
-        states = env.observation_space.shape
-        actions = env.action_space.n
-
-        # del model
-        # model = build_model(states, actions)
-        # res = TrainingResult(model, dqn)
-        # res.save()
-        x = tasks.add.delay(3, 4)
-        print(x)
-        celeryTask = CeleryTask(device=None, job_id=x.task_id)
-        celeryTask.save()
-        celeryTask.waitForCompletion()
+        x = tasks.trainDRLGYM.delay(
+            FromHour, ToHour, weight, Desire, device_id=device_id)
 
         for t in range(T):
-            print('time=', t)
             if t >= 1:
                 sample = [Tin_DRL[0, t-1], Tdes[0, t],
                           Tout[0, t], Price[t], N[0, t], t]
