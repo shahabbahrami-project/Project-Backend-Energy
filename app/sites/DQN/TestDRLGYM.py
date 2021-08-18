@@ -11,6 +11,11 @@ from tensorflow.keras.optimizers import Adam
 from core.models import TrainingResult
 import io
 import h5py
+from tensorflow import keras
+import dill
+import base64
+import tempfile
+import os
 
 
 def build_agent(model, actions):
@@ -37,10 +42,6 @@ def TestDRLGYM(FromHour, ToHour, W, Desire, device_id=1):
     model = build_model(states, actions)
     dqn = build_agent(model, actions)
 
-    obj = Tra
-    f = io.BytesIO()
-    h = h5py.File(f, 'r')
-
     dqn.compile(Adam(lr=2e-3), metrics=['mae'])
     dqn.load_weights('sites/DQN/dqn_weights.h5f')
     scores = dqn.test(env, nb_episodes=1, visualize=False)
@@ -48,20 +49,22 @@ def TestDRLGYM(FromHour, ToHour, W, Desire, device_id=1):
 
 
 def LoadTrainedModel(FromHour, ToHour, W, Desire, device_id=1):
+    obj = TrainingResult.objects.get(device_id=device_id)
+    if not obj:
+        return None
     env = ShowerEnv(FromHour, ToHour, W, Desire)
     states = env.observation_space.shape
     actions = env.action_space.n
-    json_file = open('dqn_model.json', 'r')
-    loaded_model_json = json_file.read()
-    json_file.close()
+    loaded_model_json = obj.model
     model = model_from_json(loaded_model_json)
-    # model = build_model(states, actions)
     dqn = build_agent(model, actions)
     dqn.compile(Adam(lr=2e-3), metrics=['mae'])
-    dqn.load_weights('dqn_weights.h5')
-    obj = TrainingResult.objects.get(device_id=device_id)
-    print(obj)
-    # if obj:
+    weights_filepath = 'weights.h5'
+    f = open(weights_filepath, "wb")
+    f.write(obj.weights_bin)
+    f.close()
+    dqn.load_weights(weights_filepath)
+    os.remove(weights_filepath)
     return dqn
 
 

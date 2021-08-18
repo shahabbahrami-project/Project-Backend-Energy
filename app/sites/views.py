@@ -525,8 +525,8 @@ def SensorOnline(request, device_id=1):
     if type == "DRL" or type == "DRLMPCManual":
         dqn = LoadTrainedModel(FromHour, ToHour, weight, Desire)
 
-        x = tasks.trainDRLGYM.delay(
-            FromHour, ToHour, weight, Desire, device_id=device_id)
+        # x = tasks.trainDRLGYM.delay(
+        #     FromHour, ToHour, weight, Desire, device_id=device_id)
 
         for t in range(T):
             if t >= 1:
@@ -572,4 +572,5 @@ def SensorOnline(request, device_id=1):
                'cumcostMPC': CumCost_MPC[0, t]},
         meas.append(row)
     data = data = json.dumps(meas, default=myconverter)
+    print(data)
     return HttpResponse(data)

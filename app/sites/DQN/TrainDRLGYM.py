@@ -6,6 +6,9 @@ from tensorflow.keras.optimizers import Adam
 from rl.agents import DQNAgent
 from rl.policy import BoltzmannQPolicy
 from rl.memory import SequentialMemory
+import dill
+from io import BytesIO
+import base64
 
 
 def build_model(states, actions):
@@ -25,6 +28,15 @@ def build_agent(model, actions):
     return dqn
 
 
+def Base64Converter(ObjectFile):
+    bytes_container = BytesIO()
+    dill.dump(ObjectFile, bytes_container)
+    bytes_container.seek(0)
+    bytes_file = bytes_container.read()
+    base64File = base64.b64encode(bytes_file)
+    return base64File
+
+
 def TrainDRLGYM(FromHour, ToHour, W, Desire):
     env = ShowerEnv(FromHour, ToHour, W, Desire)
     states = env.observation_space.shape
@@ -38,5 +50,12 @@ def TrainDRLGYM(FromHour, ToHour, W, Desire):
 
     scores = dqn.test(env, nb_episodes=1, visualize=False)
     print(np.mean(scores.history['episode_reward']))
-    model_json = model.to_json()
-    return dqn, model_json
+    model_def = model.to_json()
+
+    # model_json = dqn.to_json()
+    # base64KModelJson = Base64Converter(model_json)
+    # base64KModelJsonWeights = Base64Converter(dqn.get_weights())
+    # print(base64KModelJson)
+    # print(base64KModelJsonWeights)
+
+    return dqn, model_def
