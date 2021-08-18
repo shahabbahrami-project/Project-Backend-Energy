@@ -233,26 +233,9 @@ def SensorDataGeneration(request):
             else:
                 N[i, t] = 0
 
-    # Tout = np.zeros((Appnum,T))
-    # for i in range(0,Appnum):
-    #     for t in range(0, T-1):
-    #         if t%96<=48:
-    #             if t%3!=0:
-    #                 Tout[i,t]=Tout[i,t-1]
-    #             else:
-    #                 Tout[i,t]=  0.25*randint(56, 64)
-    #                 # while t>=0 and np.absolute(Tout[i,t]-Tout[i,t-1])>10:
-    #                 #     Tout[i,t]= 0.25*randint(56, 64)
-    #         else:
-    #             if t%3!=0:
-    #                 Tout[i,t]=Tout[i,t-1]
-    #             else:
-    #                 Tout[i,t]=  0.25*randint(44, 52)
-
     Tout = np.zeros((Appnum, T))
     for i in range(0, Appnum):
         df = pd.read_csv('sites/DQN/csvfiles/Hobo_15minutedata_2020.csv')
-        # df.loc[:,'Date'] = pd.to_datetime(df.Date.astype(str)+' '+df.Time.astype(str))
         df['DateTime'] = pd.to_datetime(
             df['Date'] + ' ' + df['Time'], errors='coerce')
         df1 = df[['DateTime', 'Temperature (S-THB 10510805:10502491-1), *C']]
@@ -329,14 +312,9 @@ def SensorDataGeneration(request):
         N_MA = np.zeros((Appnum, T))
         N_MA[0, :] = moving_average(N[0, :], 4)
 
-    # date_N_days_ago = datetime(2021, 3, 15, 0, 0, 0, 0)
-    # date_now = datetime(2021, 3, 16, 0, 0, 0, 0)
-    # date_N_days_ago = datetime.now() - timedelta(minutes=10*T)
-    # date_now = datetime(2021, 3, 16, 0, 0, 0, 0)
     today = datetime.date.today()
     date_now = dt.combine(today, dt.min.time())
     date_N_days_ago = date_now - datetime.timedelta(minutes=15*T)
-    # timearray = np.arange(date_N_days_ago, datetime.now(), timedelta(minutes=10)).astype(datetime)
     timearray = np.arange(date_N_days_ago, date_now, datetime.timedelta(
         minutes=15)).astype(datetime.datetime)
     meas = []
@@ -350,21 +328,16 @@ def SensorDataGeneration(request):
                'costManual': Cost_manual[0, t],
                'occupancy': N[0, t],
                'occupancyMA': N_MA[0, t],
-               # 'indoorTempDRL':Tin_DRL[t],
-               # 'costDRL':0.3*Cost_DRL[t],
                'price': Price[t],
-               # 'cumcostDRL':0.3*CumCost_DRL[t],
                'cumcostManual': CumCost_manual[0, t]},
         meas.append(row)
-    # print(meas)
-    # N1=N.tolist()
-    # data = json.dumps(N1)
     data = data = json.dumps(meas, default=myconverter)
     return HttpResponse(data)
 
 
 @csrf_exempt
 def SensorOnline(request, device_id=1):
+    device_id = 3
     z = np.exp(-300/130)
     body_unicode = request.body.decode('utf-8')
     body = json.loads(body_unicode)
@@ -399,9 +372,6 @@ def SensorOnline(request, device_id=1):
     test = 1
     startDay = 24
     endDay = 72
-    # Tin_DRL = loadtxt('sites/extra/Tin.csv', delimiter=',')
-    #
-    # Cost_DRL= loadtxt('sites/extra/Cost.csv', delimiter=',')
     FixTemp = 8
     Tair = 10
 
@@ -502,7 +472,6 @@ def SensorOnline(request, device_id=1):
     Tin_MPC = np.zeros((Appnum, T))
     Tset_MPC = np.zeros((Appnum, T))
     if type == "MPC" or type == "DRLMPCManual":
-
         for t in range(T):
             if t >= 1:
                 Tair_MPC[0, t], Tin_MPC[0, t], Tset_MPC[0, t], Cost_MPC[0, t] = MPC(
@@ -522,11 +491,9 @@ def SensorOnline(request, device_id=1):
     Tair_DRL = np.zeros((Appnum, T))
     Tin_DRL = np.zeros((Appnum, T))
     Tset_DRL = np.zeros((Appnum, T))
+    print(body)
     if type == "DRL" or type == "DRLMPCManual":
-        dqn = LoadTrainedModel(FromHour, ToHour, weight, Desire)
-
-        # x = tasks.trainDRLGYM.delay(
-        #     FromHour, ToHour, weight, Desire, device_id=device_id)
+        dqn = LoadTrainedModel(FromHour, ToHour, weight, Desire, device_id)
 
         for t in range(T):
             if t >= 1:
@@ -572,5 +539,4 @@ def SensorOnline(request, device_id=1):
                'cumcostMPC': CumCost_MPC[0, t]},
         meas.append(row)
     data = data = json.dumps(meas, default=myconverter)
-    print(data)
     return HttpResponse(data)

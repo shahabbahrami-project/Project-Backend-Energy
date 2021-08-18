@@ -52,10 +52,4 @@ def TrainDRLGYM(FromHour, ToHour, W, Desire):
     print(np.mean(scores.history['episode_reward']))
     model_def = model.to_json()
 
-    # model_json = dqn.to_json()
-    # base64KModelJson = Base64Converter(model_json)
-    # base64KModelJsonWeights = Base64Converter(dqn.get_weights())
-    # print(base64KModelJson)
-    # print(base64KModelJsonWeights)
-
     return dqn, model_def

@@ -1,4 +1,5 @@
 import numpy as np
+import datetime
 from sites.DQN.CustomENV import ShowerEnv
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.models import model_from_json
@@ -48,23 +49,50 @@ def TestDRLGYM(FromHour, ToHour, W, Desire, device_id=1):
     print(np.mean(scores.history['episode_reward']))
 
 
-def LoadTrainedModel(FromHour, ToHour, W, Desire, device_id=1):
-    obj = TrainingResult.objects.get(device_id=device_id)
-    if not obj:
-        return None
+def getDefaultModel(actions):
+    json_file = open('dqn_model.json', 'r')
+    loaded_model_json = json_file.read()
+    json_file.close()
+    return loaded_model_json
+
+
+def LoadTrainedModel(FromHour, ToHour, W, Desire, device_id):
+    obj, created = TrainingResult.objects.get_or_create(device_id=device_id)
     env = ShowerEnv(FromHour, ToHour, W, Desire)
     states = env.observation_space.shape
     actions = env.action_space.n
+    if created:
+        # Load default model if not previously trained
+        obj.model = getDefaultModel(actions)
     loaded_model_json = obj.model
     model = model_from_json(loaded_model_json)
     dqn = build_agent(model, actions)
     dqn.compile(Adam(lr=2e-3), metrics=['mae'])
+
+    # Load the default weights if creatd. Otherwise use the training result and asssign the trained weights
     weights_filepath = 'weights.h5'
-    f = open(weights_filepath, "wb")
-    f.write(obj.weights_bin)
-    f.close()
+    if created:
+        weights_filepath = 'dqn_weights.h5'
+    else:
+        f = open(weights_filepath, "wb")
+        f.write(obj.weights_bin)
+        f.close()
     dqn.load_weights(weights_filepath)
-    os.remove(weights_filepath)
+    if created:
+        tmp_file = 'tmp_weights.h5'
+        dqn.save_weights(tmp_file, overwrite=True)
+        Bytes = b''
+        with open(tmp_file, "rb") as f:
+            while (byte := f.read(1)):
+                Bytes += byte
+        obj.weights_bin = Bytes
+        obj.last_updated_at = datetime.datetime.now()
+        obj.save()
+
+        os.remove(tmp_file)
+        assert not os.path.exists(tmp_file)
+    else:
+        os.remove(weights_filepath)
     return dqn
 
 
