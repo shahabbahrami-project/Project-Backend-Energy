@@ -337,15 +337,21 @@ def SensorDataGeneration(request):
 
 @csrf_exempt
 def SensorOnline(request, device_id=1):
-    device_id = 3
-    z = np.exp(-300/130)
+
+    z = np.exp(-300/100)
     body_unicode = request.body.decode('utf-8')
     body = json.loads(body_unicode)
+    device_id = body["deviceID"]
     FromHour = body["fromTimeSlot"]
     ToHour = body["toTimeSlot"]
     type = body["type"]
     weight = 10-body["weight"]
-    Desire = body["desire"]
+    DesireUp = body["desire"][1]
+    DesireDown= body["desire"][0]
+    Desire = (DesireUp+DesireDown)/2
+
+
+
     Appnum = 1
     PowerSlice = 0.1
     NumSlice = int(1+(1/PowerSlice))
@@ -368,11 +374,11 @@ def SensorOnline(request, device_id=1):
     Tsetmin = np.zeros((Appnum, T))
     Tsetmax = 30*np.ones((Appnum, T))
 
-    w = weight*np.ones((Appnum, T))  # Unit:  cents/C
+    w = 10* weight*np.ones((Appnum, T))  # Unit:  cents/C
     test = 1
     startDay = 24
     endDay = 72
-    FixTemp = 8
+    FixTemp = 5
     Tair = 10
 
     N = np.zeros((Appnum, T))
@@ -417,17 +423,32 @@ def SensorOnline(request, device_id=1):
     for i in range(0, Appnum):
         for t in range(0, T):
             if t % 96 < FromHour:
-                if t % 3 != 0:
-                    Tdes[i, t] = Tdes[i, t-1]
-                else:
                     Tdes[i, t] = 0
             elif t % 96 >= FromHour and t % 96 <= ToHour:
-                if t % 3 != 0:
-                    Tdes[i, t] = Tdes[i, t-1]
-                else:
                     Tdes[i, t] = Desire
             else:
                 Tdes[i, t] = 0
+
+    TdesUp = np.zeros((Appnum, T))
+    for i in range(0, Appnum):
+        for t in range(0, T):
+            if t % 96 < FromHour:
+                    TdesUp[i, t] = 0
+            elif t % 96 >= FromHour and t % 96 <= ToHour:
+                    TdesUp[i, t] = DesireUp
+            else:
+                TdesUp[i, t] = 0
+
+    TdesDown = np.zeros((Appnum, T))
+    for i in range(0, Appnum):
+        for t in range(0, T):
+            if t % 96 < FromHour:
+                    Tdes[i, t] = 0
+            elif t % 96 >= FromHour and t % 96 <= ToHour:
+                    TdesDown[i, t] = DesireDown
+            else:
+                TdesDown[i, t] = 0
+
     Tset_manual = np.zeros((Appnum, T))
     for i in range(0, Appnum):
         for t in range(0, T-1):
@@ -483,7 +504,7 @@ def SensorOnline(request, device_id=1):
                 Tset_MPC[0, t] = np.maximum(Tin_MPC[0, t]-5, 10)
 
             else:
-                Tset_MPC[0, t] = Tin_MPC[0, t]*1.2
+                Tset_MPC[0, t] = Tin_MPC[0, t]*1.1
             CumCost_MPC[0, t] = np.sum(Cost_MPC[0, :])
 
     Cost_DRL = np.zeros((Appnum, T))
@@ -503,7 +524,7 @@ def SensorOnline(request, device_id=1):
                 Tair_DRL[0, t], Tin_DRL[0, t], Tset_DRL[0, t], Cost_DRL[0,
                                                                         t] = res
             else:
-                sample = [12, Tdes[0, t], Tout[0, t], Price[t], N[0, t], t]
+                sample = [25, Tdes[0, t], Tout[0, t], Price[t], N[0, t], t]
                 res = ForwardDRLGYM(dqn, weight, sample)
                 Tair_DRL[0, t], Tin_DRL[0, t], Tset_DRL[0, t], Cost_DRL[0,
                                                                         t] = res
@@ -520,6 +541,8 @@ def SensorOnline(request, device_id=1):
                'outdoorTemp': Tout[0, t],
                'outdoorTempMA': Tout_MA[0, t],
                'desirableTemp': Tdes[0, t],
+               'desirableTempUp': TdesUp[0, t],
+               'desirableTempDown': TdesDown[0, t],
                'setpointManual': Tset_manual[0, t],
                'indoorTempManual': Tin_manual[0, t],
                'costManual': Cost_manual[0, t],

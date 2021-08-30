@@ -16,7 +16,7 @@ def trainDRLGYM(FromHour, ToHour, W, Desire):
         obj, created = TrainingResult.objects.get_or_create(device=device)
 
         dqn, model_json = TrainDRLGYM(FromHour, ToHour, W, Desire)
-        weights_file = 'weights.h5'
+        weights_file = 'sites/DQN/weights.h5'
         dqn.save_weights(weights_file, overwrite=True)
         Bytes = b''
         with open(weights_file, "rb") as f:
@@ -29,3 +29,7 @@ def trainDRLGYM(FromHour, ToHour, W, Desire):
 
         os.remove(weights_file)
         assert not os.path.exists(weights_file)
+
+@shared_task
+def TestTask(x,y):
+    print("doing add:", x+y)

@@ -50,7 +50,7 @@ def TestDRLGYM(FromHour, ToHour, W, Desire, device_id=1):
 
 
 def getDefaultModel(actions):
-    json_file = open('dqn_model.json', 'r')
+    json_file = open('sites/DQN/dqn_model.json', 'r')
     loaded_model_json = json_file.read()
     json_file.close()
     return loaded_model_json
@@ -65,6 +65,7 @@ def LoadTrainedModel(FromHour, ToHour, W, Desire, device_id):
         # Load default model if not previously trained
         obj.model = getDefaultModel(actions)
     loaded_model_json = obj.model
+    print(loaded_model_json)
     model = model_from_json(loaded_model_json)
     dqn = build_agent(model, actions)
     dqn.compile(Adam(lr=2e-3), metrics=['mae'])
@@ -72,7 +73,7 @@ def LoadTrainedModel(FromHour, ToHour, W, Desire, device_id):
     # Load the default weights if creatd. Otherwise use the training result and asssign the trained weights
     weights_filepath = 'weights.h5'
     if created:
-        weights_filepath = 'dqn_weights.h5'
+        weights_filepath = 'sites/DQN/dqn_weights.h5'
     else:
         f = open(weights_filepath, "wb")
         f.write(obj.weights_bin)
@@ -100,20 +101,20 @@ def ForwardDRLGYM(dqn, W, Sample):
     action = dqn.forward(Sample)
     print('action is', action)
     t = Sample[5]
-    z = np.exp(-300/130)
+    z = np.exp(-300/100)
     OutdoorTemp_now = Sample[2]
     People_now = Sample[4]
     Desire_now = Sample[1]
     Prev_IndTemp = Sample[0]
     Price = Sample[3]
     airTemp = 10+action
-    if airTemp > Prev_IndTemp:
+    if airTemp < Prev_IndTemp:
         IndoorTemp_new = Prev_IndTemp + \
             (OutdoorTemp_now-Prev_IndTemp)*z+(airTemp-Prev_IndTemp)*z
-        Tset = min(Prev_IndTemp+3, 30)
+        Tset = max(Prev_IndTemp-5, 10)
     else:
         IndoorTemp_new = Prev_IndTemp+(OutdoorTemp_now-Prev_IndTemp)*z
-        Tset = Prev_IndTemp/2
+        Tset = Prev_IndTemp*1.1
 
     # Calculate reward
     if airTemp > Prev_IndTemp:

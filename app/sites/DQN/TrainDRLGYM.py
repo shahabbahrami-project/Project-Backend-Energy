@@ -46,7 +46,7 @@ def TrainDRLGYM(FromHour, ToHour, W, Desire):
 
     dqn = build_agent(model, actions)
     dqn.compile(Adam(lr=2e-3), metrics=['mae'])
-    dqn.fit(env, nb_steps=5000, visualize=False, verbose=1)
+    dqn.fit(env, nb_steps=2000, visualize=False, verbose=1)
 
     scores = dqn.test(env, nb_episodes=1, visualize=False)
     print(np.mean(scores.history['episode_reward']))

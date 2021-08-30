@@ -38,13 +38,13 @@ class ShowerEnv(Env):
         # 1 -1 = 0
         # 2 -1 = 1 temperature
         time=96-self.day_length
-        z=np.exp(-300/130)
+        z=np.exp(-300/100)
         OutdoorTemp_now=OutdoorTemp3(self.ToutAvg[time],self.ToutStd[time])
         People_now=People(time,self.FromHour,self.ToHour)
         Desire_now=Desire(time,self.desire,self.FromHour,self.ToHour)
         Prev_IndTemp=self.state[0]
         airTemp=10+action
-        if airTemp>self.state[0]:
+        if airTemp<self.state[0]:
             self.state[0]= self.state[0]+(OutdoorTemp_now-self.state[0])*z+(airTemp-self.state[0])*z
         else:
             self.state[0]= self.state[0]+(OutdoorTemp_now-self.state[0])*z
@@ -59,9 +59,9 @@ class ShowerEnv(Env):
         self.day_length -= 1
         # Calculate reward
         if airTemp<Prev_IndTemp:
-            reward = -0.8*(Price(time)*abs(float(30-airTemp))+People_now*self.W*abs(float(Desire_now)-self.state[0]))
+            reward = -1*(Price(time)*abs(float(30-airTemp))+People_now*self.W*abs(float(Desire_now)-self.state[0]))
         else:
-            reward = -0.8*(People_now*self.W*abs(float(Desire_now)-self.state[0]))
+            reward = -1*(People_now*self.W*abs(float(Desire_now)-self.state[0]))
 
         # Check if shower is done
         if self.day_length <= 0:
